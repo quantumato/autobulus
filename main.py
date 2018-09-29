@@ -2,6 +2,7 @@ import picamera.array
 import picamera
 import cv2
 import time
+import imutils
 
 IMG_WIDTH = 240
 IMG_HEIGHT = 240
@@ -26,6 +27,8 @@ if __name__ == "__main__":
         camera.framerate = 32
         time.sleep(2)
         prev = None
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
         with picamera.array.PiRGBArray(camera, size=(IMG_WIDTH,IMG_HEIGHT)) as stream:
             for frame in camera.capture_continuous(stream, format='bgr', use_video_port=True):
                 image = frame.array
@@ -47,7 +50,24 @@ if __name__ == "__main__":
 
                     thresh = cv2.threshold(delta, 5, 255, cv2.THRESH_BINARY)[1]
 
-                    cv2.imshow("Frame", thresh)
+                    #now that we have blobs let's dilate to fill in the holes
+                    thresh = cv2.dilate(thresh, kernel, iterations=1)
+
+                    #find contours
+                    #NOTE: without copy() we just get edges
+                    cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL,\
+                        cv2.CHAIN_APPROX_SIMPLE)
+                    #don't know why this line is necessary
+                    cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+
+                    for c in cnts:
+                        if cv2.contourArea(c) < 5000:
+                            continue
+
+                        (x, y, w, h) = cv2.boundingRect(c)
+                        cv2.rectangle(image, (x,y), (x+w, y+h), (0, 255, 0), 2)
+
+                    cv2.imshow("Frame", image)
 
                     #not having these lines result in "ghost" images
                     #prev = gray.copy().astype("float")
