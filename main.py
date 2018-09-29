@@ -6,6 +6,8 @@ import imutils
 
 IMG_WIDTH = 240
 IMG_HEIGHT = 240
+WCENTER = IMG_WIDTH/2
+HCENTER = IMG_HEIGHT/2
 
 def testCamera():
     camera = picamera.PiCamera()
@@ -28,7 +30,8 @@ if __name__ == "__main__":
         time.sleep(2)
         prev = None
 
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
+        dkernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
+        ekernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         with picamera.array.PiRGBArray(camera, size=(IMG_WIDTH,IMG_HEIGHT)) as stream:
             for frame in camera.capture_continuous(stream, format='bgr', use_video_port=True):
                 image = frame.array
@@ -51,7 +54,8 @@ if __name__ == "__main__":
                     thresh = cv2.threshold(delta, 5, 255, cv2.THRESH_BINARY)[1]
 
                     #now that we have blobs let's dilate to fill in the holes
-                    thresh = cv2.dilate(thresh, kernel, iterations=1)
+                    thresh = cv2.dilate(thresh, dkernel, iterations=1)
+                    thresh = cv2.erode(thresh, ekernel, iterations=1)
 
                     #find contours
                     #NOTE: without copy() we just get edges
@@ -61,11 +65,14 @@ if __name__ == "__main__":
                     cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 
                     for c in cnts:
+                        #TODO: tune this value
                         if cv2.contourArea(c) < 5000:
                             continue
 
                         (x, y, w, h) = cv2.boundingRect(c)
-                        cv2.rectangle(image, (x,y), (x+w, y+h), (0, 255, 0), 2)
+                        #cv2.rectangle(image, (x,y), (x+w, y+h), (0, 255, 0), 2)
+                        cv2.line(image, (WCENTER, HCENTER), (x+w/2, y+h/2), (0, 255, 0), 5)
+
 
                     cv2.imshow("Frame", image)
 
@@ -73,6 +80,8 @@ if __name__ == "__main__":
                     #prev = gray.copy().astype("float")
                     #stream.truncate(0)
 
+
+                    #TODO: handle extrapolation
 
                 stream.truncate(0)
                 if key == ord('q'):
