@@ -35,6 +35,8 @@ with picamera.PiCamera() as camera:
 	ekernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
 	with picamera.array.PiRGBArray(camera, size=(IMG_WIDTH,IMG_HEIGHT)) as stream:
 		counter = 0
+		last_deltax = 0
+		last_deltay = 0
 		for frame in camera.capture_continuous(stream, format='bgr', use_video_port=True):
 			image = frame.array
 			gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -44,10 +46,9 @@ with picamera.PiCamera() as camera:
 
 			key = cv2.waitKey(1) & 0xFF
 
-			if prev is None or counter > 0:
+			if prev is None:
 				prev = gray.copy().astype("float")
 				stream.truncate(0)
-				counter = counter - 1
 				continue
 			else:
 				#get the diff between the frames
@@ -87,13 +88,28 @@ with picamera.PiCamera() as camera:
 				#cv2.imshow("Frame", image)
 				print("x",deltax/90.0)	
 				print("y",deltay/90.0)	
+
+				'''if deltay == 0:
+					deltay = last_deltay
+					last_deltay = 0
+					counter = 0
+				if deltax == 0:
+					deltax = last_deltax
+					last_deltax = 0
+					counter = 0
+				'''
 				
+				if counter > 0:
+					counter = counter - 1
 				#rotateYaw(deltax/100.0)
+				#TODO: if lost target, check last vector
 				if deltay != 0:
-					rotatePitch((-1)*deltay/90.0)
+					rotatePitch((((-1)*deltay)+15)/50.0)
+					last_deltay = deltay
 					counter = 2
 				if deltax != 0:
-					rotateYaw(deltax/90.0)
+					rotateYaw(deltax/50.0)
+					last_deltax = deltax
 					counter = 2
 
 				#not having these lines result in "ghost" images
