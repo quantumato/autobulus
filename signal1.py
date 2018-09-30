@@ -6,7 +6,7 @@ import sys
 #ser=serial.Serial('/dev/ttyACM0', 9600)
 
 #ser.flushInput()
-#GPIO.cleanup()
+GPIO.cleanup()
 GPIO.setmode(GPIO.BOARD)
 
 GPIO.setup(40, GPIO.OUT, initial=GPIO.LOW)
@@ -29,7 +29,7 @@ def pinHigh(pin):
 def pinHigh(pin):
 	GPIO.output(pin, GPIO.LOW)
 
-def rotateYaw(degrees, direction):
+def rotateYaw(degrees):
 	#40 = high 
 	#38 = low	//direction 
 	#36 = high	//direction
@@ -37,12 +37,18 @@ def rotateYaw(degrees, direction):
 
 	#constant to convert degrees to seconds
 	#APPROXIMATELY 2-3degrees
-	deg2sec = 0.01;
+	deg2sec = 0.015;
 
 	#run the motor
 	
-	#FORWARD
-	if direction == 1:
+	#LEFT
+	#if direction == 1:
+	if degrees > 3:
+		degrees = 3;
+	elif degrees < -3:
+		degrees = -3
+		
+	if degrees < 0:
 		GPIO.output(40, GPIO.HIGH)
 		GPIO.output(38, GPIO.LOW)
 		GPIO.output(36, GPIO.HIGH)
@@ -52,27 +58,33 @@ def rotateYaw(degrees, direction):
 		GPIO.output(36, GPIO.LOW)
 
 	#sleep
-	time.sleep(deg2sec*degrees)
+	time.sleep(deg2sec*abs(degrees))
 
 	#STOP
 	GPIO.output(40, GPIO.LOW)
 	GPIO.output(38, GPIO.LOW)
 	GPIO.output(36, GPIO.LOW)
+	return 0
 	
 
-def rotatePitch(degrees, direction):
+def rotatePitch(degrees):
 	#8 = high	//direction
 	#10 = low	//direction
 	#12 = high
 	#all low to turn off
 	
 	#constant to convert degrees to seconds
-	deg2sec = 0.008;
+	deg2sec = 0.015;
 
 	#run the motor
 
-	#FORWARD
-	if direction == 1:
+	if degrees > 1:
+		degrees = 1;
+	elif degrees < -1:
+		degrees = -1
+
+	#DOWN
+	if degrees < 0:
 		GPIO.output(8, GPIO.HIGH)
 		GPIO.output(10, GPIO.LOW)
 		GPIO.output(12, GPIO.HIGH)
@@ -82,12 +94,13 @@ def rotatePitch(degrees, direction):
 		GPIO.output(12, GPIO.HIGH)
 
 	#sleep
-	time.sleep(deg2sec*degrees)
+	time.sleep(deg2sec*abs(degrees))
 
 	#STOP
 	GPIO.output(8, GPIO.LOW)
 	GPIO.output(10, GPIO.LOW)
 	GPIO.output(12, GPIO.LOW)
+	return 0
 	
 '''
 if int(sys.argv[2]) != -1:
@@ -95,4 +108,6 @@ if int(sys.argv[2]) != -1:
 if int(sys.argv[1]) != -1:
 	rotateYaw(1,int(sys.argv[1]))
 '''
-#GPIO.cleanup()
+
+rotatePitch(4)
+#rotatePitch(2, 1)
