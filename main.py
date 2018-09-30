@@ -101,6 +101,9 @@ with picamera.PiCamera() as camera:
 				
 				if counter > 0:
 					counter = counter - 1
+					prev = gray.copy().astype("float")
+					stream.truncate(0)
+					continue
 				#rotateYaw(deltax/100.0)
 				#TODO: if lost target, check last vector
 				if deltay != 0:
